@@ -1,0 +1,516 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>نظام الموظفين والمديرين</title>    <script src="https://cdn.tailwindcss.com"></script>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    <style>        body { font-family: 'Cairo', 'Tahoma', sans-serif; }    </style></head><body class="bg-gray-50 text-gray-800">
+    <!-- الحاوية الرئيسية لاختيار الواجهة -->    <div id="main-container" class="container mx-auto p-4 max-w-4xl mt-12">        <div class="text-center mb-10">            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-700 mb-2">نظام إدارة الموظفين والمديرين</h1>            <p class="text-gray-500">يرجى اختيار الخانة للولوج إلى النظام بالرقم الوظيفي</p>        </div>                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">            <!-- خانة الموظفين -->            <div onclick="openLoginModal('employee')" class="bg-white p-8 rounded-2xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer border-t-4 border-blue-500 text-center group">                <div class="bg-blue-50 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition">                    <i class="fa-solid fa-user-tie text-3xl text-blue-600"></i>                </div>                <h2 class="text-2xl font-bold text-gray-800 mb-2">خانة الموظفين</h2>                <p class="text-gray-500 text-sm">تسجيل الحضور، المهام المكلفة، المرفقات، وسحب التقارير</p>            </div>                        <!-- خانة المدير -->            <div onclick="openLoginModal('manager')" class="bg-white p-8 rounded-2xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer border-t-4 border-emerald-500 text-center group">                <div class="bg-emerald-50 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition">                    <i class="fa-solid fa-user-shield text-3xl text-emerald-600"></i>                </div>                <h2 class="text-2xl font-bold text-gray-800 mb-2">خانة المدير</h2>                <p class="text-gray-500 text-sm">متابعة الموظفين، تقارير الحضور، وإدارة الأقسام والمرفقات</p>            </div>        </div>    </div>
+    <!-- نافذة تسجيل الدخول / إنشاء حساب -->    <div id="auth-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">            <button onclick="closeModal()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600">                <i class="fa-solid fa-xmark text-xl"></i>            </button>            <h3 id="modal-title" class="text-2xl font-bold mb-6 text-gray-800 text-center">تسجيل الدخول</h3>                        <form id="auth-form" onsubmit="handleAuth(event)">                <div class="mb-4">                    <label class="block text-gray-700 font-medium mb-2">الرقم الوظيفي (الرمز الشخصي)</label>                    <input type="text" id="auth-id" required placeholder="أدخل الرقم الوظيفي" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">                </div>                <div class="mb-6">                    <label class="block text-gray-700 font-medium mb-2">الرقم السري / كلمة المرور الخاصة</label>                    <input type="password" id="auth-pass" required placeholder="أدخل الرقم السري" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">                </div>                <div class="mb-4">                    <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">دخول</button>                </div>                <div class="text-center">                    <button type="button" onclick="toggleAuthMode()" id="toggle-mode-btn" class="text-sm text-blue-600 hover:underline font-medium">ليس لديك حساب؟ تخصيص رمز سري جديد</button>                </div>            </form>        </div>    </div>
+    <!-- لوحة تحكم الموظفين -->    <div id="employee-dashboard" class="hidden container mx-auto p-4 max-w-5xl mt-6">        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 flex flex-col sm:flex-row justify-between items-center border border-gray-100 gap-4">            <div>                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم الموظف</h2>                <p class="text-gray-500 text-sm mt-1" id="welcome-user">أهلاً بك، الموظف الكريم</p>            </div>            <div class="flex gap-2">                <button onclick="openChangePasswordModal()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition"><i class="fa-solid fa-key ml-1"></i> تغيير الرمز السري</button>                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition"><i class="fa-solid fa-right-from-bracket ml-1"></i> تسجيل الخروج</button>            </div>        </div>
+        <!-- قسم التعميمات والتوجيهات الواردة من الإدارة (للموظف) -->        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-6">            <h3 class="text-xl font-bold mb-4 text-blue-600 flex items-center gap-2"><i class="fa-solid fa-bullhorn"></i> التعميمات والتوجيهات الصادرة من الإدارة (صور / ملفات إكسل)</h3>            <div class="overflow-x-auto">                <table class="w-full text-right border-collapse">                    <thead>                        <tr class="bg-gray-50 text-gray-600 border-b">                            <th class="p-3">التاريخ</th>                            <th class="p-3">عنوان التعميم</th>                            <th class="p-3">الملف المرفق (صورة / إكسل)</th>                        </tr>                    </thead>                    <tbody id="employee-directives-table" class="divide-y divide-gray-100">                        <!-- تملأ تلقائياً -->                    </tbody>                </table>            </div>        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-6">            <h3 class="text-xl font-bold mb-6 text-blue-600 flex items-center gap-2"><i class="fa-solid fa-clipboard-list"></i> <span id="form-mode-title">إضافة سجل يومي جديد</span></h3>                        <form id="employee-record-form" class="grid grid-cols-1 md:grid-cols-2 gap-5">                <input type="hidden" id="edit-index" value="-1">                <div>                    <label class="block text-gray-700 font-medium mb-2">الاسم</label>                    <input type="text" id="emp-name" required placeholder="الاسم الكامل" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500">                </div>                <div>                    <label class="block text-gray-700 font-medium mb-2">الرقم الوظيفي</label>                    <input type="text" id="emp-id-field" readonly class="w-full px-4 py-2.5 border rounded-xl bg-gray-50 text-gray-500">                </div>                <div>                    <label class="block text-gray-700 font-medium mb-2">الشعبة / الوحدة</label>                    <div class="flex gap-2">                        <select id="emp-section" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500">                            <option value="مسؤول الشعبة">1- مسؤول الشعبة</option>                            <option value="وحدة المخازن">2- وحدة المخازن</option>                            <option value="وحدة الموجودات (عدد واليات)">3- وحدة الموجودات (عدد واليات)</option>                            <option value="وحدة الموجودات (اثاث)">4- وحدة الموجودات (اثاث)</option>                            <option value="وحدة الموجودات (مشاريع)">5- وحدة الموجودات (مشاريع)</option>                            <option value="وحدة نظام المحاسبه">6- وحدة نظام المحاسبه</option>                            <option value="وحدة الاداره">7- وحدة الاداره</option>                            <option value="لجان الشراء">8- لجان الشراء</option>                        </select>                        <button type="button" onclick="manageSections()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl transition" title="إضافة أو تعديل الشعبة"><i class="fa-solid fa-plus"></i></button>                    </div>                </div>                <div>                    <label class="block text-gray-700 font-medium mb-2">الحالة / الحضور</label>                    <select id="emp-attendance" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500">                        <option value="حاضر">حاضر</option>                        <option value="غائب">غائب</option>                        <option value="متأخر (زمني)">متأخر (زمني)</option>                        <option value="إجازة">إجازة</option>                        <option value="إيفاد">إيفاد</option>                        <option value="دورة">دورة</option>                    </select>                </div>                <div class="md:col-span-2">                    <label class="block text-gray-700 font-medium mb-2">العمل المكلف به</label>                    <textarea id="emp-task" rows="3" placeholder="تفاصيل المهام والواجبات المكلف بها..." class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>                </div>                <div>                    <label class="block text-gray-700 font-medium mb-2">المرفق (صورة أو ملف إكسل)</label>                    <input type="file" id="emp-attachment" accept="image/*,.xlsx,.xls,.csv" class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">                    <span class="text-xs text-gray-400 mt-1 block">الصيغ المقبولة: صور (PNG/JPG) أو إكسل (XLSX/XLS)</span>                </div>                <div>                    <label class="block text-gray-700 font-medium mb-2">التاريخ</label>                    <input type="date" id="emp-date" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500">                </div>                <div class="md:col-span-2 flex flex-wrap justify-end gap-3 mt-6 border-t pt-4">                    <button type="button" onclick="exportEmployeeReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-medium transition flex items-center gap-2"><i class="fa-solid fa-file-excel"></i> سحب تقرير أعمالي الشهرية</button>                    <button type="submit" id="submit-emp-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition flex items-center gap-2"><i class="fa-solid fa-save"></i> حفظ البيانات وإرسالها</button>                    <button type="button" id="cancel-edit-btn" onclick="cancelEdit()" class="hidden bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-xl font-medium transition">إلغاء التعديل</button>                </div>            </form>        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">            <h3 class="text-xl font-bold mb-4 text-blue-600 flex items-center gap-2"><i class="fa-solid fa-calendar-days"></i> سجل أعمالي الشهرية (الاطلاع والتعديل)</h3>            <div class="overflow-x-auto">                <table class="w-full text-right border-collapse">                    <thead>                        <tr class="bg-gray-50 text-gray-600 border-b">                            <th class="p-3">التاريخ</th>                            <th class="p-3">الشعبة / الوحدة</th>                            <th class="p-3">الحالة</th>                            <th class="p-3">العمل المكلف به</th>                            <th class="p-3">مرفقات الموظف (معاينة / تحميل)</th>                            <th class="p-3 text-center">الإجراءات</th>                        </tr>                    </thead>                    <tbody id="employee-my-records-table" class="divide-y divide-gray-100">                        <!-- يتم ملؤها تلقائياً -->                    </tbody>                </table>            </div>        </div>    </div>
+    <!-- لوحة تحكم المدير -->    <div id="manager-dashboard" class="hidden container mx-auto p-4 max-w-6xl mt-6">        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 flex flex-col sm:flex-row justify-between items-center border border-gray-100 gap-4">            <div>                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم المدير</h2>                <p class="text-gray-500 text-sm mt-1">متابعة سجلات الموظفين، الحضور، وإدارة الأقسام والمرفقات</p>            </div>            <div class="flex gap-2">                <button onclick="openChangePasswordModal()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition"><i class="fa-solid fa-key ml-1"></i> تغيير الرمز السري</button>                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition"><i class="fa-solid fa-right-from-bracket ml-1"></i> تسجيل الخروج</button>            </div>        </div>
+        <!-- قسم خاص بالمدير لإرسال مرفقات وتوجيهات عامة للموظفين -->        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-6">            <h3 class="text-xl font-bold mb-4 text-emerald-600 flex items-center gap-2"><i class="fa-solid fa-bullhorn"></i> إرسال تعميم (صورة أو ملف إكسل) للموظفين</h3>            <form onsubmit="handleManagerDirective(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">                <div>                    <input type="text" id="manager-directive-title" required placeholder="عنوان التوجيه أو التعميم..." class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500">                </div>                <div>                    <input type="file" id="manager-directive-file" accept="image/*,.xlsx,.xls,.csv" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">                    <span class="text-xs text-gray-400 mt-1 block">الصيغ المقبولة: صور (PNG/JPG) أو إكسل (XLSX/XLS)</span>                </div>                <div>                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-medium transition"><i class="fa-solid fa-upload ml-1"></i> نشر التعميم للموظفين</button>                </div>            </form>        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-6">            <h3 class="text-xl font-bold mb-4 text-emerald-600">التعميمات والمرفقات الصادرة من الإدارة</h3>            <div class="overflow-x-auto">                <table class="w-full text-right border-collapse">                    <thead>                        <tr class="bg-gray-50 text-gray-600 border-b">                            <th class="p-3">التاريخ</th>                            <th class="p-3">عنوان التعميم</th>                            <th class="p-3">الملف المرفق (معاينة / فتح)</th>                            <th class="p-3 text-center">إجراء</th>                        </tr>                    </thead>                    <tbody id="manager-directives-table" class="divide-y divide-gray-100">                        <!-- تملأ تلقائياً -->                    </tbody>                </table>            </div>        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">                <h3 class="text-xl font-bold text-emerald-600 flex items-center gap-2"><i class="fa-solid fa-users-gear"></i> تقارير وأعمال الموظفين (الشهرية المتسلسلة)</h3>                                <div class="w-full md:w-72 relative">                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">                        <i class="fa-solid fa-search"></i>                    </span>                    <input type="text" id="search-input" onkeyup="filterManagerTable()" placeholder="ابحث بالاسم، الرقم الوظيفي، أو الشعبة..." class="w-full pr-10 pl-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">                </div>
+                <div class="flex gap-2">                    <button onclick="exportManagerSelectedOrAll('filtered')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium transition flex items-center gap-2 text-sm"><i class="fa-solid fa-file-excel"></i> سحب التقرير المحدد</button>                    <button onclick="exportManagerSelectedOrAll('all')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium transition flex items-center gap-2 text-sm"><i class="fa-solid fa-file-excel"></i> سحب تقارير الكل</button>                </div>            </div>
+            <div class="overflow-x-auto">                <table class="w-full text-right border-collapse">                    <thead>                        <tr class="bg-gray-50 text-gray-600 border-b">                            <th class="p-3">التاريخ</th>                            <th class="p-3">الرقم الوظيفي</th>                            <th class="p-3">اسم الموظف</th>                            <th class="p-3">الشعبة / الوحدة</th>                            <th class="p-3">الحالة</th>                            <th class="p-3">العمل المكلف به</th>                            <th class="p-3">المرفق المرفوع (معاينة / تحميل)</th>                        </tr>                    </thead>                    <tbody id="manager-records-table" class="divide-y divide-gray-100">                        <!-- سيتم تعبئتها تلقائياً -->                    </tbody>                </table>            </div>        </div>    </div>
+    <!-- نافذة تغيير كلمة المرور/الرمز الشخصي -->    <div id="change-pass-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 relative">            <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">تغيير الرمز السري الخاص</h3>            <form onsubmit="handlePasswordChange(event)">                <div class="mb-4">                    <label class="block text-gray-700 text-sm font-medium mb-1">الرمز السري الجديد</label>                    <input type="password" id="new-pass" required class="w-full px-3 py-2 border rounded-xl text-right">                </div>                <div class="flex gap-2">                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700">تحديث</button>                    <button type="button" onclick="closeChangePasswordModal()" class="w-full bg-gray-200 text-gray-700 py-2 rounded-xl font-medium hover:bg-gray-300">إلغاء</button>                </div>            </form>        </div>    </div>
+    <!-- نافذة منبثقة لمعاينة الصور -->    <div id="image-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-4 relative text-center">            <button onclick="closeImageModal()" class="absolute top-4 left-4 text-gray-500 hover:text-gray-800 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>            <h3 id="modal-img-title" class="text-lg font-bold mb-3 text-gray-800">معاينة الصورة</h3>            <div class="flex justify-center items-center overflow-auto max-h-[75vh]">                <img id="modal-img-element" src="" alt="صورة المرفق" class="max-w-full rounded-xl shadow-md">            </div>        </div>    </div>
+
+    <!-- جافاسكريبت للتحكم والوظائف -->    <script>
+        const allowedEmployeeIds = ["750158", "741019", "812714", "802808", "810061", "827118", "832421", "796026", "808083", "300958", "301628"];
+        const allowedManagerIds = ["750158", "741019", "832421", "796026"];
+
+        let currentRole = '';
+        let isRegisterMode = false;
+        let loggedInUserId = '';
+        let usersDB = JSON.parse(localStorage.getItem('system_users')) || {};
+        let employeeRecords = JSON.parse(localStorage.getItem('employee_records')) || [];
+        let managerDirectives = JSON.parse(localStorage.getItem('manager_directives')) || [];
+
+        function openLoginModal(role) {
+            currentRole = role;
+            isRegisterMode = false;
+            updateModalUI();
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-form').reset();
+        }
+
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            updateModalUI();
+        }
+
+        function updateModalUI() {
+            const title = document.getElementById('modal-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const toggleBtn = document.getElementById('toggle-mode-btn');
+            const roleName = currentRole === 'employee' ? 'الموظفين' : 'المدير';
+
+            if (isRegisterMode) {
+                title.innerText = `تخصيص رمز سري جديد (${roleName})`;
+                submitBtn.innerText = 'حفظ الرمز والبدء';
+                toggleBtn.innerText = 'لديك رمز سري بالفعل؟ تسجيل الدخول';
+            } else {
+                title.innerText = `تسجيل الدخول (${roleName})`;
+                submitBtn.innerText = 'دخول';
+                toggleBtn.innerText = 'ليس لديك حساب؟ تخصيص رمز سري جديد';
+            }
+        }
+
+        function handleAuth(event) {
+            event.preventDefault();
+            const id = document.getElementById('auth-id').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+
+            if (currentRole === 'employee' && !allowedEmployeeIds.includes(id)) {
+                alert('عذراً، هذا الرقم الوظيفي غير مصرح له بالدخول إلى خانة الموظفين!');
+                return;
+            }
+
+            if (currentRole === 'manager' && !allowedManagerIds.includes(id)) {
+                alert('عذراً، هذا الرقم الوظيفي غير مخول بالدخول إلى خانة المدير!');
+                return;
+            }
+
+            if (isRegisterMode) {
+                if (usersDB[id]) {
+                    alert('هذا الرقم الوظيفي لديه رمز سري مسجل مسبقاً! قم بتسجيل الدخول مباشرة.');
+                    return;
+                }
+                usersDB[id] = { pass: pass, role: currentRole };
+                localStorage.setItem('system_users', JSON.stringify(usersDB));
+                alert('تم تخصيص الرمز السري الخاص بك بنجاح! يمكنك الدخول به الآن.');
+                toggleAuthMode();
+                return;
+            } else {
+                if (!usersDB[id]) {
+                    alert('لم يتم العثور على رمز سري مسجل لهذا الرقم الوظيفي. يرجى اختيار "تخصيص رمز سري جديد" أولاً.');
+                    return;
+                }
+
+                if (usersDB[id].pass !== pass || usersDB[id].role !== currentRole) {
+                    alert('الرقم السري غير صحيح، أو أن هذا الرقم الوظيفي مسجل في خانة أخرى!');
+                    return;
+                }
+            }
+
+            loggedInUserId = id;
+            closeModal();
+            
+            document.getElementById('main-container').classList.add('hidden');
+
+            if (currentRole === 'employee') {
+                document.getElementById('employee-dashboard').classList.remove('hidden');
+                document.getElementById('emp-id-field').value = id;
+                document.getElementById('emp-date').valueAsDate = new Date();
+                
+                const lastEmpRecord = employeeRecords.slice().reverse().find(r => r.id === id);
+                if (lastEmpRecord) {
+                    document.getElementById('emp-name').value = lastEmpRecord.name;
+                    document.getElementById('emp-section').value = lastEmpRecord.section;
+                }
+                loadEmployeeMyRecords();
+                loadEmployeeDirectives(); 
+            } else {
+                document.getElementById('manager-dashboard').classList.remove('hidden');
+                loadManagerTable(employeeRecords);
+                loadManagerDirectives();
+            }
+        }
+
+        function logout() {
+            loggedInUserId = '';
+            document.getElementById('employee-dashboard').classList.add('hidden');
+            document.getElementById('manager-dashboard').classList.add('hidden');
+            document.getElementById('main-container').classList.remove('hidden');
+            document.getElementById('auth-form').reset();
+            cancelEdit();
+        }
+
+        function manageSections() {
+            const newSec = prompt('أدخل اسم الشعبة أو الوحدة الجديدة:');
+            if (newSec && newSec.trim() !== '') {
+                const select = document.getElementById('emp-section');
+                const opt = document.createElement('option');
+                opt.value = newSec.trim();
+                opt.text = newSec.trim();
+                select.add(opt);
+                select.value = newSec.trim();
+                alert('تمت إضافة الشعبة بنجاح!');
+            }
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('change-pass-modal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-pass-modal').classList.add('hidden');
+            document.getElementById('new-pass').value = '';
+        }
+
+        function handlePasswordChange(event) {
+            event.preventDefault();
+            const newPassField = document.getElementById('new-pass');
+            if (!newPassField) return;
+            const newPass = newPassField.value.trim();
+            if (newPass && usersDB[loggedInUserId]) {
+                usersDB[loggedInUserId].pass = newPass;
+                localStorage.setItem('system_users', JSON.stringify(usersDB));
+                alert('تم تغيير الرمز السري الخاص بك بنجاح!');
+                closeChangePasswordModal();
+            }
+        }
+
+        function handleManagerDirective(e) {
+            e.preventDefault();
+            const title = document.getElementById('manager-directive-title').value;
+            const fileInput = document.getElementById('manager-directive-file');
+            
+            if (fileInput.files.length === 0) {
+                alert('يرجى اختيار ملف (صورة أو إكسل)');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(uploadEvent) {
+                const directive = {
+                    date: new Date().toISOString().split('T')[0],
+                    title: title,
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileData: uploadEvent.target.result
+                };
+
+                managerDirectives.push(directive);
+                localStorage.setItem('manager_directives', JSON.stringify(managerDirectives));
+                alert('تم نشر التعميم والمرفق بنجاح!');
+                document.getElementById('manager-directive-title').value = '';
+                fileInput.value = '';
+                loadManagerDirectives();
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function loadManagerDirectives() {
+            const tbody = document.getElementById('manager-directives-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            managerDirectives = JSON.parse(localStorage.getItem('manager_directives')) || [];
+                        
+            if (managerDirectives.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-400">لا توجد تعميمات منشورة حتى الآن</td></tr>`;
+                return;
+            }
+
+            managerDirectives.forEach((dir, idx) => {
+                const tr = document.createElement('tr');
+                const fileLink = renderFileLink(dir);
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500">${dir.date}</td>
+                    <td class="p-3 font-semibold">${dir.title}</td>
+                    <td class="p-3">${fileLink}</td>
+                    <td class="p-3 text-center"><button onclick="deleteDirective(${idx})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i> حذف</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadEmployeeDirectives() {
+            const tbody = document.getElementById('employee-directives-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';                        
+            managerDirectives = JSON.parse(localStorage.getItem('manager_directives')) || [];
+
+            if (managerDirectives.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-gray-400">لا توجد تعميمات إدارية جديدة حتى الآن</td></tr>`;
+                return;
+            }
+
+            managerDirectives.forEach(dir => {
+                const tr = document.createElement('tr');
+                const fileLink = renderFileLink(dir);
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500">${dir.date}</td>
+                    <td class="p-3 font-semibold text-gray-800">${dir.title}</td>
+                    <td class="p-3">${fileLink}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // دالة موحدة لتوليد زر المعاينة للصور أو التحميل للإكسل
+        function renderFileLink(item) {
+            if (!item || !item.fileData) return `<span class="text-gray-400 text-xs">بدون مرفق</span>`;
+            
+            const isImage = item.fileType && item.fileType.startsWith('image/');
+            const fileName = item.fileName || 'ملف مرفق';
+
+            if (isImage) {
+                return `<button onclick="openImagePreview('${item.fileData}', '${item.title || fileName}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5"><i class="fa-solid fa-image"></i> معاينة الصورة (${fileName})</button>`;
+            } else {
+                return `<a href="${item.fileData}" download="${fileName}" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> تحميل ملف الإكسل (${fileName})</a>`;
+            }
+        }
+
+        function openImagePreview(dataUrl, title) {
+            document.getElementById('modal-img-title').innerText = title;
+            document.getElementById('modal-img-element').src = dataUrl;
+            document.getElementById('image-modal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+            document.getElementById('modal-img-element').src = '';
+        }
+
+        function deleteDirective(idx) {
+            if (confirm('هل تريد حذف هذا التعميم؟')) {
+                managerDirectives.splice(idx, 1);
+                localStorage.setItem('manager_directives', JSON.stringify(managerDirectives));
+                loadManagerDirectives();
+            }
+        }
+
+        function loadEmployeeMyRecords() {
+            const tbody = document.getElementById('employee-my-records-table');
+            tbody.innerHTML = '';
+
+            const myRecords = employeeRecords.map((rec, index) => ({ ...rec, globalIndex: index }))
+                                           .filter(rec => rec.id === loggedInUserId);
+
+            if (myRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-gray-400">لا توجد أعمال مسجلة لك حتى الآن</td></tr>`;
+                return;
+            }
+
+            const sortedMyRecords = myRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            sortedMyRecords.forEach(rec => {
+                const tr = document.createElement('tr');
+                const attachmentCell = renderFileLink(rec);
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500 font-medium">${rec.date}</td>
+                    <td class="p-3">${rec.section}</td>
+                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeStyle(rec.attendance)}">${rec.attendance}</span></td>
+                    <td class="p-3 text-gray-600">${rec.task}</td>
+                    <td class="p-3">${attachmentCell}</td>
+                    <td class="p-3 text-center flex justify-center gap-2">
+                        <button onclick="editRecord(${rec.globalIndex})" class="bg-amber-100 text-amber-700 hover:bg-amber-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition" title="تعديل هذا العمل"><i class="fa-solid fa-pen-to-square"></i> تعديل</button>
+                        <button onclick="deleteRecord(${rec.globalIndex})" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition" title="حذف هذا العمل"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editRecord(globalIndex) {
+            const rec = employeeRecords[globalIndex];
+            if (!rec) return;
+
+            document.getElementById('edit-index').value = globalIndex;
+            document.getElementById('emp-name').value = rec.name;
+            document.getElementById('emp-section').value = rec.section;
+            document.getElementById('emp-attendance').value = rec.attendance;
+            document.getElementById('emp-task').value = rec.task;
+            document.getElementById('emp-date').value = rec.date;
+
+            document.getElementById('form-mode-title').innerText = 'تعديل السجل اليومي المحدد';
+            document.getElementById('submit-emp-btn').innerHTML = '<i class="fa-solid fa-check ml-1"></i> حفظ التعديلات';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            document.getElementById('edit-index').value = '-1';
+            document.getElementById('employee-record-form').reset();
+            document.getElementById('emp-id-field').value = loggedInUserId;
+            document.getElementById('emp-date').valueAsDate = new Date();
+            document.getElementById('form-mode-title').innerText = 'إضافة سجل يومي جديد';
+            document.getElementById('submit-emp-btn').innerHTML = '<i class="fa-solid fa-save ml-1"></i> حفظ البيانات وإرسالها';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        }
+
+        function deleteRecord(globalIndex) {
+            if (confirm('هل أنت متأكد من حذف هذا السجل اليومي نهائياً؟')) {
+                employeeRecords.splice(globalIndex, 1);
+                localStorage.setItem('employee_records', JSON.stringify(employeeRecords));
+                loadEmployeeMyRecords();
+                if (currentRole === 'manager') {
+                    loadManagerTable(employeeRecords);
+                }
+                alert('تم حذف السجل بنجاح.');
+            }
+        }
+
+        // التعامل مع إرسال سجل الموظف مع دعم رفع الملفات (صورة أو إكسل)
+        document.getElementById('employee-record-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const editIndex = parseInt(document.getElementById('edit-index').value);
+            const name = document.getElementById('emp-name').value.trim();
+            const section = document.getElementById('emp-section').value;
+            const attendance = document.getElementById('emp-attendance').value;
+            const task = document.getElementById('emp-task').value.trim();
+            const date = document.getElementById('emp-date').value;
+            const fileInput = document.getElementById('emp-attachment');
+
+            // دالة داخلية لحفظ البيانات بعد قراءة الملف إن وجد
+            function saveRecordWithFile(fileData, fileName, fileType) {
+                let finalFileName = fileName;
+                let finalFileData = fileData;
+                let finalFileType = fileType;
+
+                if (!fileData && editIndex !== -1) {
+                    finalFileName = employeeRecords[editIndex].fileName;
+                    finalFileData = employeeRecords[editIndex].fileData;
+                    finalFileType = employeeRecords[editIndex].fileType;
+                }
+
+                const recordData = {
+                    id: loggedInUserId,
+                    name: name,
+                    section: section,
+                    attendance: attendance,
+                    task: task,
+                    date: date,
+                    fileName: finalFileName,
+                    fileData: finalFileData,
+                    fileType: finalFileType,
+                    attachmentName: finalFileName // للحفاظ التوافقية مع جداول التصدير
+                };
+
+                if (editIndex === -1) {
+                    employeeRecords.push(recordData);
+                    alert('تم حفظ وإرسال البيانات اليومية بنجاح!');
+                } else {
+                    employeeRecords[editIndex] = recordData;
+                    alert('تم تحديث السجل بنجاح!');
+                    cancelEdit();
+                }
+
+                localStorage.setItem('employee_records', JSON.stringify(employeeRecords));
+                loadEmployeeMyRecords();
+                document.getElementById('employee-record-form').reset();
+                document.getElementById('emp-id-field').value = loggedInUserId;
+                document.getElementById('emp-date').valueAsDate = new Date();
+            }
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(uploadEvent) {
+                    saveRecordWithFile(uploadEvent.target.result, file.name, file.type);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveRecordWithFile(null, null, null);
+            }
+        });
+
+        function loadManagerTable(records) {
+            const tbody = document.getElementById('manager-records-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-gray-400">لا توجد سجلات مسجلة للموظفين حتى الآن</td></tr>`;
+                return;
+            }
+
+            const sortedRecords = records.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            sortedRecords.forEach(rec => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition';
+                const attachmentCell = renderFileLink(rec);
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-500 font-medium">${rec.date}</td>
+                    <td class="p-3 font-semibold text-gray-800">${rec.id}</td>
+                    <td class="p-3 font-medium text-gray-800">${rec.name}</td>
+                    <td class="p-3">${rec.section}</td>
+                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeStyle(rec.attendance)}">${rec.attendance}</span></td>
+                    <td class="p-3 text-gray-600 max-w-xs truncate" title="${rec.task}">${rec.task}</td>
+                    <td class="p-3">${attachmentCell}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterManagerTable() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const filtered = employeeRecords.filter(rec => 
+                rec.name.toLowerCase().includes(query) || 
+                rec.id.toLowerCase().includes(query) || 
+                rec.section.toLowerCase().includes(query)
+            );
+            loadManagerTable(filtered);
+        }
+
+        function getBadgeStyle(status) {
+            switch (status) {
+                case 'حاضر': return 'bg-emerald-100 text-emerald-700';
+                case 'غائب': return 'bg-red-100 text-red-700';
+                case 'متأخر (زمني)': return 'bg-amber-100 text-amber-700';
+                case 'إجازة': return 'bg-blue-100 text-blue-700';
+                case 'إيفاد': return 'bg-purple-100 text-purple-700';
+                case 'دورة': return 'bg-indigo-100 text-indigo-700';
+                default: return 'bg-gray-100 text-gray-700';
+            }
+        }
+
+        function exportEmployeeReport() {
+            const myRecords = employeeRecords.filter(rec => rec.id === loggedInUserId);
+            if (myRecords.length === 0) {
+                alert('لا توجد أعمال مسجلة لك لسحب التقرير!');
+                return;
+            }
+            exportToCSV(myRecords, `تقرير_أعمال_الموظف_${loggedInUserId}.csv`);
+        }
+
+        function exportManagerSelectedOrAll(type) {
+            let dataToExport = employeeRecords;
+            if (type === 'filtered') {
+                const query = document.getElementById('search-input').value.toLowerCase().trim();
+                if (query) {
+                    dataToExport = employeeRecords.filter(rec => 
+                        rec.name.toLowerCase().includes(query) || 
+                        rec.id.toLowerCase().includes(query) || 
+                        rec.section.toLowerCase().includes(query)
+                    );
+                }
+            }
+
+            if (dataToExport.length === 0) {
+                alert('لا توجد بيانات مطابقة لتصديرها!');
+                return;
+            }
+            exportToCSV(dataToExport, 'تقارير_الموظفين_الشاملة.csv');
+        }
+
+        function exportToCSV(data, filename) {
+            let csvContent = "\uFEFF"; 
+            csvContent += "التاريخ,الرقم الوظيفي,اسم الموظف,الشعبة / الوحدة,الحالة,العمل المكلف به,المرفق\n";
+
+            data.forEach(row => {
+                const cleanTask = `"${(row.task || '').replace(/"/g, '""')}"`;
+                const cleanName = `"${(row.name || '').replace(/"/g, '""')}"`;
+                const cleanSection = `"${(row.section || '').replace(/"/g, '""')}"`;
+                const line = [row.date, row.id, cleanName, cleanSection, row.attendance, cleanTask, row.fileName || 'لا يوجد'].join(",");
+                csvContent += line + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
